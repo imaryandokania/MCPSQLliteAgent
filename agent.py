@@ -1,19 +1,29 @@
+#!/usr/bin/env python3
+import sys
 from smolagents import ToolCallingAgent, ToolCollection, LiteLLMModel
 from mcp import StdioServerParameters
 
-# Set up the model
-model = LiteLLMModel(
-    model_id="ollama_chat/mistral",
-    num_ctx=8192,
-)
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: agent.py \"your question here\"")
+        sys.exit(1)
 
-# Configure server connection
-server_parameters = StdioServerParameters(
-    command="python3",
-    args=["server.py"],
-)
+    prompt = " ".join(sys.argv[1:])  
 
-# Connect to the tool and run a query
-with ToolCollection.from_mcp(server_parameters, trust_remote_code=True) as tool_collection:
-    agent = ToolCallingAgent(tools=[*tool_collection.tools], model=model)
-    agent.run("Can you tell me which company has the highest revenue?")
+    model = LiteLLMModel(
+        model_id="ollama_chat/mistral",
+        num_ctx=8192,
+    )
+
+    server_parameters = StdioServerParameters(
+        command="python3",
+        args=["server.py"],
+    )
+
+    with ToolCollection.from_mcp(server_parameters, trust_remote_code=True) as tool_collection:
+        agent = ToolCallingAgent(tools=[*tool_collection.tools], model=model)
+        response = agent.run(prompt)
+        print(response)
+
+if __name__ == "__main__":
+    main()
